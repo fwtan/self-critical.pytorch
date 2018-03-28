@@ -11,6 +11,7 @@ import numpy as np
 
 import time
 import os
+import os.path as osp
 from six.moves import cPickle
 
 import opts
@@ -25,6 +26,10 @@ try:
 except ImportError:
     print("Tensorflow not installed; No tensorboard logging.")
     tf = None
+
+def maybe_create(dir_path):
+    if not osp.exists(dir_path):
+        os.makedirs(dir_path)
 
 def add_summary_value(writer, key, value, iteration):
     summary = tf.Summary(value=[tf.Summary.Value(tag=key, simple_value=value)])
@@ -81,6 +86,8 @@ def train(opt):
     # Load the optimizer
     if vars(opt).get('start_from', None) is not None and os.path.isfile(os.path.join(opt.start_from,"optimizer.pth")):
         optimizer.load_state_dict(torch.load(os.path.join(opt.start_from, 'optimizer.pth')))
+
+    maybe_create(opt.checkpoint_path)
 
     while True:
         if update_lr_flag:
@@ -184,6 +191,7 @@ def train(opt):
                 current_score = - val_loss
 
             best_flag = False
+
             if True: # if true
                 if best_val_score is None or current_score > best_val_score:
                     best_val_score = current_score
