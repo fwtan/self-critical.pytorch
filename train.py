@@ -70,7 +70,6 @@ def train(opt):
     loader.split_ix = infos.get('split_ix', loader.split_ix)
     if opt.load_best_score == 1:
         best_val_score = infos.get('best_val_score', None)
-        print('best_val_score:', best_val_score)
 
     model = models.setup(opt)
     model.cuda()
@@ -85,8 +84,8 @@ def train(opt):
     optimizer = optim.Adam(model.parameters(), lr=opt.learning_rate, weight_decay=opt.weight_decay)
 
     # Load the optimizer
-    if vars(opt).get('start_from', None) is not None and os.path.isfile(os.path.join(opt.start_from,"optimizer.pth")):
-        optimizer.load_state_dict(torch.load(os.path.join(opt.start_from, 'optimizer.pth')))
+    if vars(opt).get('start_from', None) is not None and osp.isfile(osp.join(opt.start_from,"optimizer.pth")):
+        optimizer.load_state_dict(torch.load(osp.join(opt.start_from, 'optimizer.pth')))
 
     maybe_create(opt.checkpoint_path)
 
@@ -100,6 +99,7 @@ def train(opt):
             else:
                 opt.current_lr = opt.learning_rate
             utils.set_lr(optimizer, opt.current_lr)
+
             # Assign the scheduled sampling prob
             if epoch > opt.scheduled_sampling_start and opt.scheduled_sampling_start >= 0:
                 frac = (epoch - opt.scheduled_sampling_start) // opt.scheduled_sampling_increase_every
@@ -110,6 +110,7 @@ def train(opt):
             if opt.self_critical_after != -1 and epoch >= opt.self_critical_after:
                 sc_flag = True
                 init_cider_scorer(opt.cached_tokens)
+                print('sc_flag: ', sc_flag)
             else:
                 sc_flag = False
 
