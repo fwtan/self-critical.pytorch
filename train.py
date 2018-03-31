@@ -70,7 +70,7 @@ def train(opt):
     loader.split_ix = infos.get('split_ix', loader.split_ix)
     if opt.load_best_score == 1:
         best_val_score = infos.get('best_val_score', None)
-        print(best_val_score)
+        print('best_val_score:', best_val_score)
 
     model = models.setup(opt)
     model.cuda()
