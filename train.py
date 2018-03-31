@@ -123,8 +123,9 @@ def train(opt):
         start = time.time()
 
         tmp = [data['fc_feats'], data['att_feats'], data['labels'], data['masks']]
-        tmp = [Variable(torch.from_numpy(_), requires_grad=False).cuda() for _ in tmp]
+        tmp = [Variable(torch.from_numpy(x).float()).cuda() for x in tmp]
         fc_feats, att_feats, labels, masks = tmp
+        print(fc_feats.size())
         
         optimizer.zero_grad()
         if not sc_flag:

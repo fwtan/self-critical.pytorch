@@ -85,7 +85,7 @@ class FCModel(CaptionModel):
 
         for i in range(seq.size(1)):
             if i == 0:
-                xt = self.img_embed(fc_feats.float())
+                xt = self.img_embed(fc_feats)
             else:
                 if self.training and i >= 2 and self.ss_prob > 0.0: # otherwiste no need to sample
                     sample_prob = fc_feats.data.new(batch_size).uniform_(0, 1)
