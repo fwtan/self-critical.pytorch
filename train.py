@@ -2,24 +2,21 @@ from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
 
-import torch
-import torch.nn as nn
-from torch.autograd import Variable
-import torch.optim as optim
-
 import numpy as np
-
-import time
-import os
+import os, sys, time
 import os.path as osp
 from six.moves import cPickle
+import opts, models
 
-import opts
-import models
 from dataloader import *
 import eval_utils
 import misc.utils as utils
 from misc.rewards import init_cider_scorer, get_self_critical_reward
+
+import torch
+import torch.nn as nn
+from torch.autograd import Variable
+import torch.optim as optim
 
 try:
     import tensorflow as tf
@@ -27,13 +24,16 @@ except ImportError:
     print("Tensorflow not installed; No tensorboard logging.")
     tf = None
 
+
 def maybe_create(dir_path):
     if not osp.exists(dir_path):
         os.makedirs(dir_path)
 
+
 def add_summary_value(writer, key, value, iteration):
     summary = tf.Summary(value=[tf.Summary.Value(tag=key, simple_value=value)])
     writer.add_summary(summary, iteration)
+
 
 def train(opt):
     opt.use_att = utils.if_use_att(opt.caption_model)
@@ -47,15 +47,15 @@ def train(opt):
     histories = {}
     if opt.start_from is not None:
         # open old infos and check if models are compatible
-        with open(os.path.join(opt.start_from, 'infos_'+opt.id+'.pkl')) as f:
+        with open(osp.join(opt.start_from, 'infos_'+opt.id+'.pkl')) as f:
             infos = cPickle.load(f)
             saved_model_opt = infos['opt']
             need_be_same=["caption_model", "rnn_type", "rnn_size", "num_layers"]
             for checkme in need_be_same:
                 assert vars(saved_model_opt)[checkme] == vars(opt)[checkme], "Command line argument and saved model disagree on '%s' " % checkme
 
-        if os.path.isfile(os.path.join(opt.start_from, 'histories_'+opt.id+'.pkl')):
-            with open(os.path.join(opt.start_from, 'histories_'+opt.id+'.pkl')) as f:
+        if osp.isfile(osp.join(opt.start_from, 'histories_'+opt.id+'.pkl')):
+            with open(osp.join(opt.start_from, 'histories_'+opt.id+'.pkl')) as f:
                 histories = cPickle.load(f)
 
     iteration = infos.get('iter', 0)
@@ -70,6 +70,7 @@ def train(opt):
     loader.split_ix = infos.get('split_ix', loader.split_ix)
     if opt.load_best_score == 1:
         best_val_score = infos.get('best_val_score', None)
+        print(best_val_score)
 
     model = models.setup(opt)
     model.cuda()
