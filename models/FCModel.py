@@ -176,7 +176,8 @@ class FCModel(CaptionModel):
                     else:
                         # scale logprobs by temperature
                         prob_prev = torch.exp(torch.div(logprobs.data, temperature)).cpu()
-                    it = torch.multinomial(prob_prev, 1).cuda()
+                    # it = torch.multinomial(prob_prev, 1).cuda()
+                    it = torch.multinomial(prob_prev, 1)
                     sampleLogprobs = logprobs.gather(1, Variable(it, requires_grad=False)) # gather the logprobs at sampled positions
                     it = it.view(-1).long() # and flatten indices for downstream processing
 

@@ -72,7 +72,7 @@ def train(opt):
         best_val_score = infos.get('best_val_score', None)
 
     model = models.setup(opt)
-    model.cuda()
+    # model.cuda()
 
     update_lr_flag = True
     # Assure in training mode
@@ -126,10 +126,10 @@ def train(opt):
         # tmp = [data['fc_feats'], data['att_feats'], data['labels'], data['masks']]
         # tmp = [Variable(torch.from_numpy(x).float().cuda()) for x in tmp]
         # fc_feats, att_feats, labels, masks = tmp
-        fc_feats  = Variable(torch.from_numpy(data['fc_feats']).float().cuda())
-        att_feats = Variable(torch.from_numpy(data['att_feats']).float().cuda())
-        labels    = Variable(torch.from_numpy(data['labels']).float().cuda())
-        masks     = Variable(torch.from_numpy(data['masks']).float().cuda())
+        fc_feats  = Variable(torch.from_numpy(data['fc_feats']).float())
+        att_feats = Variable(torch.from_numpy(data['att_feats']).float())
+        labels    = Variable(torch.from_numpy(data['labels']).float())
+        masks     = Variable(torch.from_numpy(data['masks']).float())
         
         optimizer.zero_grad()
         if not sc_flag:
