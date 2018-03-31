@@ -60,6 +60,11 @@ def get_self_critical_reward(model, fc_feats, att_feats, data, gen_result):
     #scores = np.array(scores[3])
     res = [{'image_id':i, 'caption': res[i]} for i in range(2 * batch_size)]
     gts = {i: gts[i % batch_size // seq_per_img] for i in range(2 * batch_size)}
+    print('*********************')
+    print(res)
+    print('--------------------')
+    print(gts)
+    print('*********************')
     _, scores = CiderD_scorer.compute_score(gts, res)
     print('Cider scores:', _)
 
