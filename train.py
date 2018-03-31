@@ -2,23 +2,21 @@ from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
 
-import torch
-import torch.nn as nn
-from torch.autograd import Variable
-import torch.optim as optim
-
 import numpy as np
-
-import time
-import os
+import os, sys, time
+import os.path as osp
 from six.moves import cPickle
+import opts, models
 
-import opts
-import models
 from dataloader import *
 import eval_utils
 import misc.utils as utils
 from misc.rewards import init_cider_scorer, get_self_critical_reward
+
+import torch
+import torch.nn as nn
+from torch.autograd import Variable
+import torch.optim as optim
 
 try:
     import tensorflow as tf
@@ -26,9 +24,16 @@ except ImportError:
     print("Tensorflow not installed; No tensorboard logging.")
     tf = None
 
+
+def maybe_create(dir_path):
+    if not osp.exists(dir_path):
+        os.makedirs(dir_path)
+
+
 def add_summary_value(writer, key, value, iteration):
     summary = tf.Summary(value=[tf.Summary.Value(tag=key, simple_value=value)])
     writer.add_summary(summary, iteration)
+
 
 def train(opt):
     opt.use_att = utils.if_use_att(opt.caption_model)
@@ -42,15 +47,15 @@ def train(opt):
     histories = {}
     if opt.start_from is not None:
         # open old infos and check if models are compatible
-        with open(os.path.join(opt.start_from, 'infos_'+opt.id+'.pkl')) as f:
+        with open(osp.join(opt.start_from, 'infos_'+opt.id+'.pkl')) as f:
             infos = cPickle.load(f)
             saved_model_opt = infos['opt']
             need_be_same=["caption_model", "rnn_type", "rnn_size", "num_layers"]
             for checkme in need_be_same:
                 assert vars(saved_model_opt)[checkme] == vars(opt)[checkme], "Command line argument and saved model disagree on '%s' " % checkme
 
-        if os.path.isfile(os.path.join(opt.start_from, 'histories_'+opt.id+'.pkl')):
-            with open(os.path.join(opt.start_from, 'histories_'+opt.id+'.pkl')) as f:
+        if osp.isfile(osp.join(opt.start_from, 'histories_'+opt.id+'.pkl')):
+            with open(osp.join(opt.start_from, 'histories_'+opt.id+'.pkl')) as f:
                 histories = cPickle.load(f)
 
     iteration = infos.get('iter', 0)
@@ -79,8 +84,10 @@ def train(opt):
     optimizer = optim.Adam(model.parameters(), lr=opt.learning_rate, weight_decay=opt.weight_decay)
 
     # Load the optimizer
-    if vars(opt).get('start_from', None) is not None and os.path.isfile(os.path.join(opt.start_from,"optimizer.pth")):
-        optimizer.load_state_dict(torch.load(os.path.join(opt.start_from, 'optimizer.pth')))
+    if vars(opt).get('start_from', None) is not None and osp.isfile(osp.join(opt.start_from,"optimizer.pth")):
+        optimizer.load_state_dict(torch.load(osp.join(opt.start_from, 'optimizer.pth')))
+
+    maybe_create(opt.checkpoint_path)
 
     while True:
         if update_lr_flag:
@@ -92,6 +99,7 @@ def train(opt):
             else:
                 opt.current_lr = opt.learning_rate
             utils.set_lr(optimizer, opt.current_lr)
+
             # Assign the scheduled sampling prob
             if epoch > opt.scheduled_sampling_start and opt.scheduled_sampling_start >= 0:
                 frac = (epoch - opt.scheduled_sampling_start) // opt.scheduled_sampling_increase_every
@@ -99,9 +107,11 @@ def train(opt):
                 model.ss_prob = opt.ss_prob
 
             # If start self critical training
+            print("epoch: ", epoch)
             if opt.self_critical_after != -1 and epoch >= opt.self_critical_after:
                 sc_flag = True
                 init_cider_scorer(opt.cached_tokens)
+                print('sc_flag: ', sc_flag)
             else:
                 sc_flag = False
 
@@ -116,8 +126,9 @@ def train(opt):
         start = time.time()
 
         tmp = [data['fc_feats'], data['att_feats'], data['labels'], data['masks']]
-        tmp = [Variable(torch.from_numpy(_), requires_grad=False).cuda() for _ in tmp]
+        tmp = [Variable(torch.from_numpy(x).float()).cuda() for x in tmp]
         fc_feats, att_feats, labels, masks = tmp
+        print(fc_feats.size())
         
         optimizer.zero_grad()
         if not sc_flag:
@@ -184,6 +195,7 @@ def train(opt):
                 current_score = - val_loss
 
             best_flag = False
+
             if True: # if true
                 if best_val_score is None or current_score > best_val_score:
                     best_val_score = current_score

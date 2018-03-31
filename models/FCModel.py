@@ -199,4 +199,3 @@ class FCModel(CaptionModel):
 
         return torch.cat([_.unsqueeze(1) for _ in seq], 1), torch.cat([_.unsqueeze(1) for _ in seqLogprobs], 1)
 
-

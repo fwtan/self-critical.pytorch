@@ -16,9 +16,11 @@ from pyciderevalcap.ciderD.ciderD import CiderD
 CiderD_scorer = None
 #CiderD_scorer = CiderD(df='corpus')
 
+
 def init_cider_scorer(cached_tokens):
     global CiderD_scorer
     CiderD_scorer = CiderD_scorer or CiderD(df=cached_tokens)
+
 
 def array_to_str(arr):
     out = ''
@@ -28,12 +30,18 @@ def array_to_str(arr):
             break
     return out.strip()
 
+
 def get_self_critical_reward(model, fc_feats, att_feats, data, gen_result):
-    batch_size = gen_result.size(0)# batch_size = sample_size * seq_per_img
+    # gen_result: (bsize*n_captions , slen), predicted token indices
+    # data['gts']: (bsize, n_captions, slen), gt token indices
+    # rewards: (bsize, slen), advantages over greedy inference
+    batch_size = gen_result.size(0) # batch_size = sample_size * seq_per_img
     seq_per_img = batch_size // len(data['gts'])
     
     # get greedy decoding baseline
-    greedy_res, _ = model.sample(Variable(fc_feats.data, volatile=True), Variable(att_feats.data, volatile=True))
+    greedy_res, _ = model.sample(
+        Variable(fc_feats.data, volatile=True), 
+        Variable(att_feats.data, volatile=True))
 
     res = OrderedDict()
     
@@ -52,16 +60,12 @@ def get_self_critical_reward(model, fc_feats, att_feats, data, gen_result):
     #scores = np.array(scores[3])
     res = [{'image_id':i, 'caption': res[i]} for i in range(2 * batch_size)]
     gts = {i: gts[i % batch_size // seq_per_img] for i in range(2 * batch_size)}
-    print('*********************************')
-    print(res)
-    print('---------------------------------')
-    print(gts)
-    print('*********************************')
     _, scores = CiderD_scorer.compute_score(gts, res)
     print('Cider scores:', _)
 
     scores = scores[:batch_size] - scores[batch_size:]
 
+    # the same reward for each step?
     rewards = np.repeat(scores[:, np.newaxis], gen_result.shape[1], 1)
 
     return rewards
