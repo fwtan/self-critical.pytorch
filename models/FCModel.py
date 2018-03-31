@@ -10,7 +10,6 @@ import misc.utils as utils
 
 from .CaptionModel import CaptionModel
 
-
 class LSTMCore(nn.Module):
     def __init__(self, opt):
         super(LSTMCore, self).__init__()
@@ -43,7 +42,6 @@ class LSTMCore(nn.Module):
         output = next_h
         state = (next_h.unsqueeze(0), next_c.unsqueeze(0))
         return output, state
-
 
 class FCModel(CaptionModel):
     def __init__(self, opt):
@@ -81,7 +79,6 @@ class FCModel(CaptionModel):
             return Variable(weight.new(self.num_layers, bsz, self.rnn_size).zero_())
 
     def forward(self, fc_feats, att_feats, seq):
-        
         batch_size = fc_feats.size(0)
         state = self.init_hidden(batch_size)
         outputs = []
@@ -201,5 +198,4 @@ class FCModel(CaptionModel):
             logprobs = F.log_softmax(self.logit(output))
 
         return torch.cat([_.unsqueeze(1) for _ in seq], 1), torch.cat([_.unsqueeze(1) for _ in seqLogprobs], 1)
-
 
