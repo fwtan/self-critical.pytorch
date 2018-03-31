@@ -107,11 +107,9 @@ def train(opt):
                 model.ss_prob = opt.ss_prob
 
             # If start self critical training
-            print("epoch: ", epoch)
             if opt.self_critical_after != -1 and epoch >= opt.self_critical_after:
                 sc_flag = True
                 init_cider_scorer(opt.cached_tokens)
-                print('sc_flag: ', sc_flag)
             else:
                 sc_flag = False
 
@@ -122,12 +120,16 @@ def train(opt):
         data = loader.get_batch('train')
         print('Read data:', time.time() - start)
 
-        torch.cuda.synchronize()
+        # torch.cuda.synchronize()
         start = time.time()
 
-        tmp = [data['fc_feats'], data['att_feats'], data['labels'], data['masks']]
-        tmp = [Variable(torch.from_numpy(x).float().cuda()) for x in tmp]
-        fc_feats, att_feats, labels, masks = tmp
+        # tmp = [data['fc_feats'], data['att_feats'], data['labels'], data['masks']]
+        # tmp = [Variable(torch.from_numpy(x).float().cuda()) for x in tmp]
+        # fc_feats, att_feats, labels, masks = tmp
+        fc_feats  = Variable(torch.from_numpy(data['fc_feats']).float().cuda())
+        att_feats = Variable(torch.from_numpy(data['att_feats']).float().cuda())
+        labels    = Variable(torch.from_numpy(data['labels']).float().cuda())
+        masks     = Variable(torch.from_numpy(data['masks']).float().cuda())
         
         optimizer.zero_grad()
         if not sc_flag:
@@ -141,7 +143,7 @@ def train(opt):
         utils.clip_gradient(optimizer, opt.grad_clip)
         optimizer.step()
         train_loss = loss.data[0]
-        torch.cuda.synchronize()
+        # torch.cuda.synchronize()
         end = time.time()
         if not sc_flag:
             print("iter {} (epoch {}), train_loss = {:.3f}, time/batch = {:.3f}" \
