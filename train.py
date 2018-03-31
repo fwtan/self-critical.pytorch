@@ -107,6 +107,7 @@ def train(opt):
                 model.ss_prob = opt.ss_prob
 
             # If start self critical training
+            print("epoch: ", epoch)
             if opt.self_critical_after != -1 and epoch >= opt.self_critical_after:
                 sc_flag = True
                 init_cider_scorer(opt.cached_tokens)
