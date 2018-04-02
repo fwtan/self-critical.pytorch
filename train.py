@@ -10,7 +10,7 @@ import torch.optim as optim
 import numpy as np
 
 import time
-import os
+import os, json
 from six.moves import cPickle
 
 import opts
@@ -65,6 +65,9 @@ def train(opt):
     loader.split_ix = infos.get('split_ix', loader.split_ix)
     if opt.load_best_score == 1:
         best_val_score = infos.get('best_val_score', None)
+
+    with open(os.path.join("opt.json"), 'w') as fp:
+        json.dump(opt.__dict__, fp, indent=4, sort_keys=True)
 
     model = models.setup(opt)
     model.cuda()
